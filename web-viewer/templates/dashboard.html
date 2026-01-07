@@ -1382,7 +1382,7 @@ This will train 3 models at once to find the winner!
                 if (data.stats) {
                     document.getElementById('episode').textContent = data.stats.episode || 0;
                     document.getElementById('total-reward').textContent = (data.stats.total_reward || 0).toFixed(2);
-                    document.getElementById('steps').textContent = data.stats.step || 0;
+                    document.getElementById('step').textContent = data.stats.step || 0;  // Fixed: was 'steps'
                     document.getElementById('fps').textContent = data.stats.fps || 0;
                     document.getElementById('last-reward').textContent = (data.stats.reward || 0).toFixed(3);
                     document.getElementById('avg-reward').textContent = (data.stats.avg_reward || 0).toFixed(2);
