@@ -20,6 +20,28 @@ import json
 
 app = Flask(__name__)
 
+class CheckpointCounterCallback(BaseCallback):
+    """Callback to count checkpoints as they're saved"""
+    def __init__(self, viewer, checkpoint_dir, training_id=0, verbose=0):
+        super().__init__(verbose)
+        self.viewer = viewer
+        self.checkpoint_dir = checkpoint_dir
+        self.training_id = training_id
+        self.last_checkpoint_count = 0
+        
+    def _on_step(self):
+        # Count checkpoint files in directory
+        try:
+            checkpoints = len([f for f in os.listdir(self.checkpoint_dir) if f.endswith('.zip')])
+            if checkpoints > self.last_checkpoint_count:
+                self.last_checkpoint_count = checkpoints
+                if self.training_id == 0:
+                    self.viewer.stats['checkpoints_saved'] = checkpoints
+                    print(f"📁 Checkpoint {checkpoints} saved!")
+        except:
+            pass
+        return True
+
 class LiveViewerCallback(BaseCallback):
     """Callback to update viewer during training"""
     def __init__(self, viewer, training_id=0, verbose=0):
@@ -295,6 +317,16 @@ class RacingViewer:
         checkpoint_dir = f"./models/checkpoints/{model_name or algorithm}_{training_id}/"
         os.makedirs(checkpoint_dir, exist_ok=True)
         
+        # Initialize checkpoint counter with existing checkpoints
+        if training_id == 0:
+            try:
+                existing_checkpoints = len([f for f in os.listdir(checkpoint_dir) if f.endswith('.zip')])
+                self.stats['checkpoints_saved'] = existing_checkpoints
+                if existing_checkpoints > 0:
+                    print(f"📁 Found {existing_checkpoints} existing checkpoints")
+            except:
+                self.stats['checkpoints_saved'] = 0
+        
         checkpoint_callback = CheckpointCallback(
             save_freq=50000 // n_envs,  # Adjust for vectorized envs
             save_path=checkpoint_dir,
@@ -303,15 +335,16 @@ class RacingViewer:
             save_vecnormalize=False,
         )
         
-        # Custom callback for live updates
+        # Custom callbacks for live updates and checkpoint counting
         viewer_callback = LiveViewerCallback(self, training_id=training_id)
+        checkpoint_counter = CheckpointCounterCallback(self, checkpoint_dir, training_id=training_id)
         
-        # Train with checkpoints and live updates
+        # Train with all callbacks
         try:
             print(f"🏁 Starting training [{training_id}]: {timesteps} timesteps with {n_envs} parallel envs...")
             self.model.learn(
                 total_timesteps=timesteps,
-                callback=[checkpoint_callback, viewer_callback],
+                callback=[checkpoint_callback, viewer_callback, checkpoint_counter],
                 progress_bar=False
             )
             
@@ -322,11 +355,6 @@ class RacingViewer:
                 model_path = f"./models/{final_name}"
                 self.model.save(model_path)
                 print(f"✅ Model [{training_id}] saved to {model_path}")
-                
-                # Count checkpoints
-                checkpoints = len([f for f in os.listdir(checkpoint_dir) if f.endswith('.zip')])
-                if training_id == 0:
-                    self.stats['checkpoints_saved'] = checkpoints
             else:
                 print(f"⚠️ Training [{training_id}] stopped by user")
         except Exception as e:
