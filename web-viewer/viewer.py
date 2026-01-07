@@ -17,8 +17,29 @@ import io
 import base64
 import os
 import json
+import hashlib
 
 app = Flask(__name__)
+
+# Password protection for control actions
+CONTROL_PASSWORD = os.environ.get('RACING_PASSWORD', 'speedybois2024')
+
+def check_password(password):
+    """Check if provided password is correct"""
+    return password == CONTROL_PASSWORD
+
+def require_password(f):
+    """Decorator to require password for control endpoints"""
+    def decorated_function(*args, **kwargs):
+        data = request.json or {}
+        password = data.get('password', '')
+        
+        if not check_password(password):
+            return jsonify({'status': 'error', 'message': 'Invalid password'}), 401
+        
+        return f(*args, **kwargs)
+    decorated_function.__name__ = f.__name__
+    return decorated_function
 
 class CheckpointCounterCallback(BaseCallback):
     """Callback to count checkpoints as they're saved"""
@@ -473,7 +494,8 @@ def start(continuous):
         return jsonify({'status': 'started'})
     return jsonify({'status': 'already_running'})
 
-@app.route('/stop')
+@app.route('/stop', methods=['POST'])
+@require_password
 def stop():
     """Stop the current episode or training"""
     viewer.is_running = False
@@ -485,6 +507,7 @@ def stop():
     return jsonify({'status': 'stopped'})
 
 @app.route('/train', methods=['POST'])
+@require_password
 def train():
     """Start training a model with custom hyperparameters"""
     if viewer.is_training or viewer.is_running:
@@ -520,6 +543,7 @@ def train():
     })
 
 @app.route('/train_parallel', methods=['POST'])
+@require_password
 def train_parallel():
     """Start parallel training with multiple configurations"""
     if viewer.is_training or viewer.is_running:

@@ -975,9 +975,22 @@
         }
         
         function stopRacing() {
-            fetch(`${basePath}/stop`)
+            const password = promptPassword();
+            if (!password) return;
+            
+            fetch(`${basePath}/stop`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ password: password })
+            })
                 .then(response => response.json())
                 .then(data => {
+                    if (data.status === 'error') {
+                        alert('❌ ' + data.message);
+                        return;
+                    }
                     console.log('Stopped:', data);
                     const statusBadge = document.getElementById('status-badge');
                     statusBadge.className = 'status-badge stopped';
@@ -1058,7 +1071,16 @@
             explorationGroup.style.display = this.value === 'DQN' ? 'block' : 'none';
         });
         
+        // Password prompt for control actions
+        function promptPassword() {
+            const password = prompt('🔒 Enter password to control training:');
+            return password;
+        }
+        
         function startTraining() {
+            const password = promptPassword();
+            if (!password) return;
+            
             const algorithm = document.getElementById('algorithm').value;
             const timesteps = parseInt(document.getElementById('timesteps').value);
             const continuous = document.getElementById('continuous-train').checked;
@@ -1111,11 +1133,16 @@ Estimated Time: ${estimateTime(timesteps / nEnvs)}
                     gamma: gamma,
                     exploration_fraction: exploration,
                     n_envs: nEnvs,
-                    render_all: renderAll
+                    render_all: renderAll,
+                    password: password
                 })
             })
             .then(response => response.json())
             .then(data => {
+                if (data.status === 'error') {
+                    alert('❌ ' + data.message);
+                    return;
+                }
                 console.log('Training started:', data);
                 const statusBadge = document.getElementById('status-badge');
                 statusBadge.className = 'status-badge training';
@@ -1231,17 +1258,23 @@ This will train 3 models at once to find the winner!
         // Load remote server configuration
         async function loadRemoteServers() {
             try {
-                const response = await fetch(basePath + 'api/remote_servers');
+                console.log('Loading remote servers...');
+                const response = await fetch(basePath + '/api/remote_servers');
                 const data = await response.json();
                 remoteServers = data.servers || [];
+                console.log('Found servers:', remoteServers);
                 
                 // Build server tabs
                 const tabsContainer = document.getElementById('serverTabs');
                 tabsContainer.innerHTML = '';
                 
                 remoteServers.forEach(server => {
-                    if (!server.enabled) return;
+                    if (!server.enabled) {
+                        console.log('Skipping disabled server:', server.id);
+                        return;
+                    }
                     
+                    console.log('Adding tab for server:', server.id, server.name);
                     const tab = document.createElement('button');
                     tab.className = 'server-tab';
                     tab.dataset.server = server.id;
