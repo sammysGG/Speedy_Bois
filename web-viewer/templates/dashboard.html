@@ -658,10 +658,11 @@
                     <div class="panel-title">
                         <i class="fas fa-tv"></i>
                         <span>Live Track View</span>
+                        <span id="current-server-indicator" style="color: var(--accent); font-size: 0.85em; margin-left: 10px;">Server 1</span>
                     </div>
                 </div>
                 <div class="video-container">
-                    <img id="video-stream" src="video_feed" alt="Racing Stream">
+                    <img id="video-stream" src="" alt="Racing Stream">
                 </div>
             </div>
             
@@ -1344,6 +1345,13 @@ This will train 3 models at once to find the winner!
                 }
             });
             
+            // Update server indicator
+            const server = remoteServers.find(s => s.id === serverId);
+            const indicator = document.getElementById('current-server-indicator');
+            if (indicator && server) {
+                indicator.textContent = server.name;
+            }
+            
             // Immediately fetch and display stats for this server
             updateStatsForServer(serverId);
         }
@@ -1394,13 +1402,14 @@ This will train 3 models at once to find the winner!
                 }
                 
                 // Update video feed based on server
-                const videoFeed = document.getElementById('video-feed');
+                const videoFeed = document.getElementById('video-stream');
                 if (videoFeed) {
                     if (serverId === 'local') {
                         videoFeed.src = basePath + '/video_feed';
                     } else {
                         videoFeed.src = server.url + '/video_feed';
                     }
+                    console.log('Video feed updated to:', videoFeed.src);
                 }
                 
             } catch (error) {
@@ -1412,6 +1421,15 @@ This will train 3 models at once to find the winner!
         
         // Initialize multi-server on page load
         loadRemoteServers();
+        
+        // Initialize video feed for local server
+        window.addEventListener('DOMContentLoaded', () => {
+            const videoStream = document.getElementById('video-stream');
+            if (videoStream) {
+                videoStream.src = basePath + '/video_feed';
+                console.log('Initial video feed set to:', videoStream.src);
+            }
+        });
         
         // Poll remote servers every 2 seconds
         setInterval(() => {
