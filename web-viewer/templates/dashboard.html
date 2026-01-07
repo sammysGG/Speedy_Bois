@@ -530,11 +530,12 @@
         </div>
         
         <!-- Server Content Container -->
-        <div id="serverContents">
-            <!-- Local Server Content (Default) -->
-            <div class="server-content active" data-server="local">
+        <div id="currentServerDisplay">
+            <!-- Stats and content are shared, just update values when switching servers -->
+        </div>
         
-        <!-- Stat Cards -->
+        <!-- Stat Cards (shared across all servers) -->
+        <div class="card-grid">
         <div class="card-grid">
             <div class="stat-card">
                 <div class="stat-header">
@@ -821,9 +822,6 @@
                 <!-- Mini Stats - REMOVED, now in top row -->
             </div>
         </div>
-        
-            </div><!-- End server-content local -->
-        </div><!-- End serverContents -->
     </div><!-- End main-content -->
     
     <script>
@@ -839,6 +837,13 @@
         let lastTotalReward = 0;
         
         function updateStats() {
+            // If on remote server, use updateStatsForServer instead
+            if (currentServer !== 'local') {
+                updateStatsForServer(currentServer);
+                return;
+            }
+            
+            // Local server stats update
             fetch(`${basePath}/stats`)
                 .then(response => response.json())
                 .then(data => {
@@ -1324,6 +1329,7 @@ This will train 3 models at once to find the winner!
         // Switch between servers
         function switchServer(serverId) {
             currentServer = serverId;
+            console.log('Switching to server:', serverId);
             
             // Update tab active state
             document.querySelectorAll('.server-tab').forEach(tab => {
@@ -1333,15 +1339,7 @@ This will train 3 models at once to find the winner!
                 }
             });
             
-            // Update content active state  
-            document.querySelectorAll('.server-content').forEach(content => {
-                content.classList.remove('active');
-                if (content.dataset.server === serverId) {
-                    content.classList.add('active');
-                }
-            });
-            
-            // Update stats for selected server
+            // Immediately update stats for selected server
             updateStatsForServer(serverId);
         }
         
@@ -1385,10 +1383,12 @@ This will train 3 models at once to find the winner!
                     }
                 }
                 
-                // Update video feed if not local
-                if (serverId !== 'local') {
-                    const videoFeed = document.getElementById('video-feed');
-                    if (videoFeed) {
+                // Update video feed based on server
+                const videoFeed = document.getElementById('video-feed');
+                if (videoFeed) {
+                    if (serverId === 'local') {
+                        videoFeed.src = basePath + '/video_feed';
+                    } else {
                         videoFeed.src = server.url + '/video_feed';
                     }
                 }
