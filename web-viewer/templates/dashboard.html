@@ -839,6 +839,13 @@
         let lastTotalReward = 0;
         
         function updateStats() {
+            // If viewing remote server, use its stats instead
+            if (currentServer !== 'local') {
+                updateStatsForServer(currentServer);
+                return;
+            }
+            
+            // Local server stats update
             fetch(`${basePath}/stats`)
                 .then(response => response.json())
                 .then(data => {
@@ -1324,6 +1331,7 @@ This will train 3 models at once to find the winner!
         // Switch between servers
         function switchServer(serverId) {
             currentServer = serverId;
+            console.log('Switching to server:', serverId);
             
             // Update tab active state
             document.querySelectorAll('.server-tab').forEach(tab => {
@@ -1333,30 +1341,27 @@ This will train 3 models at once to find the winner!
                 }
             });
             
-            // Update content active state  
-            document.querySelectorAll('.server-content').forEach(content => {
-                content.classList.remove('active');
-                if (content.dataset.server === serverId) {
-                    content.classList.add('active');
-                }
-            });
-            
-            // Update stats for selected server
+            // Immediately fetch and display stats for this server
             updateStatsForServer(serverId);
         }
         
         // Update stats for specific server
         async function updateStatsForServer(serverId) {
             const server = remoteServers.find(s => s.id === serverId);
-            if (!server) return;
+            if (!server) {
+                console.error('Server not found:', serverId);
+                return;
+            }
             
             try {
-                const baseUrl = server.id === 'local' ? basePath : server.url + '/';
-                const response = await fetch(baseUrl + 'api/server_info');
+                const baseUrl = server.id === 'local' ? basePath : server.url;
+                console.log('Fetching from:', baseUrl + '/api/server_info');
+                const response = await fetch(baseUrl + '/api/server_info');
                 
                 if (!response.ok) throw new Error('Server offline');
                 
                 const data = await response.json();
+                console.log('Server data:', data);
                 
                 // Update all stats with server's data
                 if (data.stats) {
@@ -1375,26 +1380,30 @@ This will train 3 models at once to find the winner!
                     const statusBadge = document.getElementById('status-badge');
                     if (data.is_training) {
                         statusBadge.className = 'status-badge training';
-                        statusBadge.querySelector('span').textContent = 'Training';
+                        statusBadge.innerHTML = '<i class="fas fa-circle"></i><span>Training</span>';
                     } else if (data.is_running) {
                         statusBadge.className = 'status-badge running';
-                        statusBadge.querySelector('span').textContent = 'Running';
+                        statusBadge.innerHTML = '<i class="fas fa-circle"></i><span>Running</span>';
                     } else {
                         statusBadge.className = 'status-badge stopped';
-                        statusBadge.querySelector('span').textContent = 'Stopped';
+                        statusBadge.innerHTML = '<i class="fas fa-circle"></i><span>Stopped</span>';
                     }
                 }
                 
-                // Update video feed if not local
-                if (serverId !== 'local') {
-                    const videoFeed = document.getElementById('video-feed');
-                    if (videoFeed) {
+                // Update video feed based on server
+                const videoFeed = document.getElementById('video-feed');
+                if (videoFeed) {
+                    if (serverId === 'local') {
+                        videoFeed.src = basePath + '/video_feed';
+                    } else {
                         videoFeed.src = server.url + '/video_feed';
                     }
                 }
                 
             } catch (error) {
                 console.error(`Error fetching stats from ${serverId}:`, error);
+                // Show error in UI
+                document.getElementById('algorithm').textContent = 'Offline';
             }
         }
         
