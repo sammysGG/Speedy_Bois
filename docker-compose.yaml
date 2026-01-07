@@ -1,6 +1,6 @@
 services:
   dcm-rl-gym:
-    image: ghcr.io/flaming-phoenix/dcm-reinforcement-learning:latest
+    build: .
     ports:
       - "8888:8888"
     volumes:

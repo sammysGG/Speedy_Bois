@@ -1,0 +1,6 @@
+gymnasium[box2d]==0.29.1
+stable-baselines3==2.2.1
+flask==3.0.0
+opencv-python==4.9.0.80
+numpy==1.26.3
+torch==2.1.2

@@ -1,0 +1,1380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DCM Race - RL Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --accent: #3b82f6;
+            --accent-dark: #2563eb;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --text-muted: #64748b;
+            --border: #334155;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow-x: hidden;
+        }
+        
+        /* Main Content */
+        .main-content {
+            padding: 20px;
+            min-height: 100vh;
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+        
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .page-title {
+            font-size: 1.4em;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .page-title i {
+            color: var(--accent);
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        /* Server Tabs */
+        .server-tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 0;
+        }
+        
+        .server-tab {
+            padding: 10px 20px;
+            background: var(--bg-secondary);
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.95em;
+            font-weight: 600;
+            transition: all 0.2s;
+            border-radius: 0;
+            border-top-left-radius: 5px;
+            border-top-right-radius: 5px;
+            position: relative;
+        }
+        
+        .server-tab:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+        
+        .server-tab.active {
+            background: var(--accent);
+            color: white;
+        }
+        
+        .server-tab.offline {
+            opacity: 0.5;
+        }
+        
+        .server-tab .status-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
+            background: var(--danger);
+        }
+        
+        .server-tab.online .status-dot {
+            background: var(--success);
+        }
+        
+        .server-content {
+            display: none;
+        }
+        
+        .server-content.active {
+            display: block;
+        }
+        
+        /* Cards */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .stat-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 12px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+        
+        .stat-label {
+            color: var(--text-muted);
+            font-size: 0.65em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .stat-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9em;
+        }
+        
+        .stat-icon.blue {
+            background: rgba(59, 130, 246, 0.15);
+            color: var(--accent);
+        }
+        
+        .stat-icon.green {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+        }
+        
+        .stat-icon.yellow {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--warning);
+        }
+        
+        .stat-icon.red {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--danger);
+        }
+        
+        .stat-value {
+            font-size: 1.3em;
+            font-weight: 700;
+            font-family: 'Courier New', monospace;
+            margin-bottom: 2px;
+        }
+        
+        .stat-change {
+            font-size: 0.7em;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .stat-change.positive {
+            color: var(--success);
+        }
+        
+        .stat-change.negative {
+            color: var(--danger);
+        }
+        
+        /* Main Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        
+        /* Video Panel */
+        .video-panel {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .panel-header {
+            padding: 10px 15px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .panel-title {
+            font-size: 0.9em;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .panel-title i {
+            color: var(--accent);
+            font-size: 0.9em;
+        }
+        
+        .video-container {
+            position: relative;
+            background: #000;
+            height: 400px;
+            overflow: hidden;
+        }
+        
+        #video-stream {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .status-badge.running {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+        }
+        
+        .status-badge.stopped {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--danger);
+        }
+        
+        .status-badge.training {
+            background: rgba(59, 130, 246, 0.15);
+            color: var(--accent);
+        }
+        
+        /* Right Panel */
+        .right-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .control-panel {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 15px;
+        }
+        
+        .panel-section {
+            margin-bottom: 15px;
+        }
+        
+        .panel-section:last-child {
+            margin-bottom: 0;
+        }
+        
+        .section-title {
+            font-size: 0.75em;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            font-size: 0.85em;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+        
+        select, input[type="text"] {
+            width: 100%;
+            padding: 10px 12px;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.9em;
+            transition: all 0.2s;
+        }
+        
+        select:focus, input[type="text"]:focus {
+            outline: none;
+            border-color: var(--accent);
+            background: var(--bg-primary);
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        
+        /* Buttons */
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+        }
+        
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: var(--accent-dark);
+        }
+        
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .btn-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        
+        /* Stats Grid */
+        .mini-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        
+        .mini-stat {
+            background: var(--bg-tertiary);
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 3px solid var(--accent);
+        }
+        
+        .mini-stat-label {
+            font-size: 0.75em;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+        
+        .mini-stat-value {
+            font-size: 1.3em;
+            font-weight: 700;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .mini-stat.green {
+            border-left-color: var(--success);
+        }
+        
+        .mini-stat.yellow {
+            border-left-color: var(--warning);
+        }
+        
+        .mini-stat.red {
+            border-left-color: var(--danger);
+        }
+        
+        /* Progress Bar */
+        .progress-bar {
+            height: 8px;
+            background: var(--bg-tertiary);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--success));
+            transition: width 0.3s;
+            border-radius: 10px;
+        }
+        
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8em;
+            color: var(--text-muted);
+            margin-top: 5px;
+        }
+        
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .card-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .card-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .btn-group {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Header -->
+        <div class="header">
+            <h1 class="page-title">
+                <i class="fas fa-flag-checkered"></i>
+                DCM RL Racing Dashboard
+            </h1>
+            <div class="header-actions">
+                <span id="status-badge" class="status-badge stopped">
+                    <i class="fas fa-circle"></i>
+                    <span>Stopped</span>
+                </span>
+            </div>
+        </div>
+        
+        <!-- Server Tabs -->
+        <div class="server-tabs" id="serverTabs">
+            <button class="server-tab active online" data-server="local">
+                <span class="status-dot"></span>
+                Server 1 (Local)
+            </button>
+        </div>
+        
+        <!-- Server Content Container -->
+        <div id="serverContents">
+            <!-- Local Server Content (Default) -->
+            <div class="server-content active" data-server="local">
+        
+        <!-- Stat Cards -->
+        <div class="card-grid">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-label">Episode</span>
+                    <div class="stat-icon blue">
+                        <i class="fas fa-hashtag"></i>
+                    </div>
+                </div>
+                <div class="stat-value" id="episode">0</div>
+                <div class="stat-change positive">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>In Progress</span>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-label">Total Reward</span>
+                    <div class="stat-icon green">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                </div>
+                <div class="stat-value" id="total-reward">0.00</div>
+                <div class="stat-change positive" id="reward-change">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>Accumulating</span>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-label">Steps</span>
+                    <div class="stat-icon yellow">
+                        <i class="fas fa-stopwatch"></i>
+                    </div>
+                </div>
+                <div class="stat-value" id="step">0</div>
+                <div class="stat-change">
+                    <i class="fas fa-clock"></i>
+                    <span id="episode-time">0s</span>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-label">FPS</span>
+                    <div class="stat-icon red">
+                        <i class="fas fa-tachometer-alt"></i>
+                    </div>
+                </div>
+                <div class="stat-value" id="fps">0</div>
+                <div class="stat-change">
+                    <i class="fas fa-video"></i>
+                    <span>Frames/Sec</span>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-label">Last Reward</span>
+                    <div class="stat-icon blue">
+                        <i class="fas fa-star"></i>
+                    </div>
+                </div>
+                <div class="stat-value" id="reward">0.00</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-label">Avg Reward</span>
+                    <div class="stat-icon green">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                </div>
+                <div class="stat-value" id="avg-reward">0.00</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-label">Max Reward</span>
+                    <div class="stat-icon yellow">
+                        <i class="fas fa-fire"></i>
+                    </div>
+                </div>
+                <div class="stat-value" id="max-reward">0.00</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-label">Algorithm</span>
+                    <div class="stat-icon red">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                </div>
+                <div class="stat-value" id="algorithm-display" style="font-size: 0.9em;">None</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-label">Parallel Jobs</span>
+                    <div class="stat-icon blue">
+                        <i class="fas fa-layer-group"></i>
+                    </div>
+                </div>
+                <div class="stat-value" id="parallel-count">0</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-label">Checkpoints</span>
+                    <div class="stat-icon green">
+                        <i class="fas fa-save"></i>
+                    </div>
+                </div>
+                <div class="stat-value" id="checkpoints-saved">0</div>
+            </div>
+        </div>
+        
+        <!-- Dashboard Grid -->
+        <div class="dashboard-grid">
+            <!-- Video Panel -->
+            <div class="video-panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <i class="fas fa-tv"></i>
+                        <span>Live Track View</span>
+                    </div>
+                </div>
+                <div class="video-container">
+                    <img id="video-stream" src="video_feed" alt="Racing Stream">
+                </div>
+            </div>
+            
+            <!-- Right Panel -->
+            <div class="right-panel">
+                <!-- Control Panel -->
+                <div class="control-panel">
+                    <div class="section-title">Quick Actions</div>
+                    <div class="btn-group">
+                        <button class="btn btn-success" onclick="startRacing(false)">
+                            <i class="fas fa-play"></i>
+                            Start Discrete
+                        </button>
+                        <button class="btn btn-primary" onclick="startRacing(true)">
+                            <i class="fas fa-play"></i>
+                            Start Continuous
+                        </button>
+                    </div>
+                    <button class="btn btn-danger" onclick="stopRacing()" style="margin-top: 10px;">
+                        <i class="fas fa-stop"></i>
+                        Stop Training
+                    </button>
+                </div>
+                
+                <!-- Quick Presets -->
+                <div class="control-panel">
+                    <div class="section-title">⚡ Quick Start</div>
+                    <button class="btn btn-success" onclick="loadPreset('quick')" style="margin-bottom: 8px;">
+                        <i class="fas fa-bolt"></i>
+                        Quick Test (10 min)
+                    </button>
+                    <button class="btn btn-primary" onclick="loadPreset('competition')" style="margin-bottom: 8px;">
+                        <i class="fas fa-trophy"></i>
+                        Competition Mode (2-3 hrs)
+                    </button>
+                    <button class="btn" onclick="startParallelTraining()" style="background: #7c3aed; color: white;">
+                        <i class="fas fa-layer-group"></i>
+                        Train 3 Models in Parallel
+                    </button>
+                </div>
+                
+                <!-- Training Panel -->
+                <div class="control-panel">
+                    <div class="section-title">Training Configuration</div>
+                    
+                    <div class="form-group">
+                        <label>Algorithm</label>
+                        <select id="algorithm">
+                            <option value="PPO" selected>PPO - Best Overall</option>
+                            <option value="A2C">A2C - Fast Training</option>
+                            <option value="DQN">DQN - Discrete Only</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Timesteps</label>
+                        <select id="timesteps">
+                            <option value="10000">10,000 (Quick Test)</option>
+                            <option value="50000">50,000 (Fast)</option>
+                            <option value="100000">100,000 (Medium)</option>
+                            <option value="200000" selected>200,000 (Long)</option>
+                            <option value="500000">500,000 (Full)</option>
+                            <option value="1000000">1,000,000 (Max)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="continuous-train" checked>
+                            <label style="margin: 0;">Continuous Actions (Recommended)</label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Parallel Environments (Speedup)</label>
+                        <select id="n-envs">
+                            <option value="1">1 (Standard)</option>
+                            <option value="2">2 (2x faster)</option>
+                            <option value="4" selected>4 (4x faster) - 2x2 Grid</option>
+                            <option value="8">8 (8x faster) - 4x2 Grid 🔥</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="render-all" checked>
+                            <label style="margin: 0;">🎥 Show Multi-Panel Grid (All Cars)</label>
+                        </div>
+                        <small style="color: var(--text-muted); font-size: 0.75em; display: block; margin-top: 4px;">
+                            4 envs = 2x2 grid | 8 envs = 4x2 grid
+                        </small>
+                    </div>
+                    
+                    <!-- Hyperparameters Section -->
+                    <div id="hyperparams" style="display: none; margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border);">
+                        <div class="form-group">
+                            <label>Learning Rate</label>
+                            <select id="learning-rate">
+                                <option value="1e-4">0.0001 (Slow)</option>
+                                <option value="3e-4" selected>0.0003 (Balanced)</option>
+                                <option value="5e-4">0.0005 (Fast)</option>
+                                <option value="1e-3">0.001 (Aggressive)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Gamma (Discount Factor)</label>
+                            <select id="gamma">
+                                <option value="0.95">0.95 (Short-term)</option>
+                                <option value="0.99" selected>0.99 (Balanced)</option>
+                                <option value="0.995">0.995 (Long-term)</option>
+                                <option value="0.999">0.999 (Very Long-term)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group" id="exploration-group">
+                            <label>Exploration (DQN only)</label>
+                            <select id="exploration">
+                                <option value="0.1">0.1 (Low)</option>
+                                <option value="0.2">0.2 (Medium)</option>
+                                <option value="0.3" selected>0.3 (High)</option>
+                                <option value="0.5">0.5 (Very High)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <button class="btn" onclick="toggleHyperparams()" style="margin-top: 10px; background: var(--bg-tertiary);">
+                        <i class="fas fa-cog"></i>
+                        <span id="hyperparam-toggle">Show Advanced Settings</span>
+                    </button>
+                    
+                    <div id="training-progress" style="display: none; margin-top: 15px;">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progress-fill"></div>
+                        </div>
+                        <div class="progress-label">
+                            <span id="progress-current">0</span>
+                            <span id="progress-total">0</span>
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-primary" onclick="startTraining()" style="margin-top: 15px;">
+                        <i class="fas fa-rocket"></i>
+                        Start Training
+                    </button>
+                </div>
+                
+                <!-- Parallel Training Status -->
+                <div class="control-panel" id="parallel-panel" style="display: none;">
+                    <div class="section-title">🔄 Parallel Training Status</div>
+                    <div id="parallel-status"></div>
+                </div>
+                
+                <!-- Mini Stats - REMOVED, now in top row -->
+            </div>
+        </div>
+        
+            </div><!-- End server-content local -->
+        </div><!-- End serverContents -->
+    </div><!-- End main-content -->
+    
+    <script>
+        let updateInterval;
+        // Fix basePath for /viewer/ subdirectory
+        let basePath = window.location.pathname;
+        if (basePath.endsWith('/')) basePath = basePath.slice(0, -1);
+        if (!basePath) basePath = '';
+        console.log('Base path:', basePath);
+        
+        let lastUpdate = Date.now();
+        let frameCount = 0;
+        let lastTotalReward = 0;
+        
+        function updateStats() {
+            fetch(`${basePath}/stats`)
+                .then(response => response.json())
+                .then(data => {
+                    // Update main stats
+                    document.getElementById('episode').textContent = data.episode;
+                    document.getElementById('step').textContent = data.step;
+                    document.getElementById('total-reward').textContent = data.total_reward.toFixed(2);
+                    document.getElementById('reward').textContent = data.reward.toFixed(2);
+                    
+                    // Update reward trend
+                    const rewardChange = document.getElementById('reward-change');
+                    if (data.total_reward > lastTotalReward) {
+                        rewardChange.className = 'stat-change positive';
+                        rewardChange.innerHTML = '<i class="fas fa-arrow-up"></i><span>+' + (data.total_reward - lastTotalReward).toFixed(2) + '</span>';
+                    } else if (data.total_reward < lastTotalReward) {
+                        rewardChange.className = 'stat-change negative';
+                        rewardChange.innerHTML = '<i class="fas fa-arrow-down"></i><span>' + (data.total_reward - lastTotalReward).toFixed(2) + '</span>';
+                    }
+                    lastTotalReward = data.total_reward;
+                    
+                    // Calculate average reward
+                    const avgReward = data.step > 0 ? (data.total_reward / data.step).toFixed(2) : '0.00';
+                    document.getElementById('avg-reward').textContent = avgReward;
+                    
+                    // Max reward
+                    document.getElementById('max-reward').textContent = data.max_reward ? data.max_reward.toFixed(2) : '0.00';
+                    
+                    // FPS calculation
+                    frameCount++;
+                    const now = Date.now();
+                    const elapsed = (now - lastUpdate) / 1000;
+                    if (elapsed >= 1) {
+                        const fps = Math.round(frameCount / elapsed);
+                        document.getElementById('fps').textContent = fps;
+                        frameCount = 0;
+                        lastUpdate = now;
+                    }
+                    
+                    // Episode time
+                    document.getElementById('episode-time').textContent = data.episode_time ? data.episode_time + 's' : '0s';
+                    
+                    // Algorithm
+                    document.getElementById('algorithm-display').textContent = data.algorithm || 'None';
+                    
+                    // Parallel count
+                    document.getElementById('parallel-count').textContent = data.parallel_count || 0;
+                    
+                    // Checkpoints
+                    document.getElementById('checkpoints-saved').textContent = data.checkpoints_saved || 0;
+                    
+                    // Update status badge
+                    const statusBadge = document.getElementById('status-badge');
+                    if (data.training_mode) {
+                        statusBadge.className = 'status-badge training';
+                        statusBadge.innerHTML = '<i class="fas fa-circle"></i><span>Training: ' + data.algorithm + '</span>';
+                        
+                        // Update progress bar
+                        if (data.current_timesteps && data.total_timesteps) {
+                            const progress = (data.current_timesteps / data.total_timesteps) * 100;
+                            document.getElementById('training-progress').style.display = 'block';
+                            document.getElementById('progress-fill').style.width = progress + '%';
+                            document.getElementById('progress-current').textContent = data.current_timesteps.toLocaleString();
+                            document.getElementById('progress-total').textContent = data.total_timesteps.toLocaleString();
+                        }
+                    } else {
+                        statusBadge.className = 'status-badge stopped';
+                        statusBadge.innerHTML = '<i class="fas fa-circle"></i><span>Stopped</span>';
+                        document.getElementById('training-progress').style.display = 'none';
+                        document.getElementById('parallel-panel').style.display = 'none';
+                    }
+                    
+                    // Update parallel training status
+                    if (data.parallel_count > 0) {
+                        updateParallelStatus();
+                    }
+                })
+                .catch(error => console.error('Error fetching stats:', error));
+        }
+        
+        function updateParallelStatus() {
+            fetch(`${basePath}/parallel_stats`)
+                .then(response => response.json())
+                .then(data => {
+                    const panel = document.getElementById('parallel-panel');
+                    const statusDiv = document.getElementById('parallel-status');
+                    
+                    if (Object.keys(data).length > 0) {
+                        panel.style.display = 'block';
+                        let html = '<div style="font-size: 0.85em;">';
+                        
+                        for (const [id, stats] of Object.entries(data)) {
+                            const progress = stats.total_timesteps > 0 
+                                ? Math.round((stats.current_timesteps / stats.total_timesteps) * 100) 
+                                : 0;
+                            
+                            html += `
+                                <div style="margin-bottom: 10px; padding: 8px; background: var(--bg-tertiary); border-radius: 6px;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                        <span><strong>${stats.algorithm}</strong> γ=${stats.gamma || '?'}</span>
+                                        <span>${progress}%</span>
+                                    </div>
+                                    <div style="height: 4px; background: var(--bg-primary); border-radius: 2px; overflow: hidden;">
+                                        <div style="height: 100%; width: ${progress}%; background: var(--accent);"></div>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; font-size: 0.8em; color: var(--text-muted); margin-top: 4px;">
+                                        <span>Episodes: ${stats.episodes}</span>
+                                        <span>Reward: ${stats.avg_reward.toFixed(2)}</span>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                        
+                        html += '</div>';
+                        statusDiv.innerHTML = html;
+                    }
+                })
+                .catch(error => console.error('Error fetching parallel stats:', error));
+        }
+        
+        function startRacing(continuous) {
+            const mode = continuous ? 1 : 0;
+            fetch(`${basePath}/start/${mode}`)
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Started:', data);
+                    const statusBadge = document.getElementById('status-badge');
+                    statusBadge.className = 'status-badge running';
+                    statusBadge.innerHTML = '<i class="fas fa-circle"></i><span>Running</span>';
+                    
+                    if (updateInterval) clearInterval(updateInterval);
+                    updateInterval = setInterval(updateStats, 100);
+                })
+                .catch(error => console.error('Error starting:', error));
+        }
+        
+        function stopRacing() {
+            fetch(`${basePath}/stop`)
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Stopped:', data);
+                    const statusBadge = document.getElementById('status-badge');
+                    statusBadge.className = 'status-badge stopped';
+                    statusBadge.innerHTML = '<i class="fas fa-circle"></i><span>Stopped</span>';
+                    
+                    if (updateInterval) {
+                        clearInterval(updateInterval);
+                        updateInterval = null;
+                    }
+                })
+                .catch(error => console.error('Error stopping:', error));
+        }
+        
+        function toggleHyperparams() {
+            const hyperparams = document.getElementById('hyperparams');
+            const toggle = document.getElementById('hyperparam-toggle');
+            const explorationGroup = document.getElementById('exploration-group');
+            const algorithm = document.getElementById('algorithm').value;
+            
+            if (hyperparams.style.display === 'none') {
+                hyperparams.style.display = 'block';
+                toggle.textContent = 'Hide Advanced Settings';
+            } else {
+                hyperparams.style.display = 'none';
+                toggle.textContent = 'Show Advanced Settings';
+            }
+            
+            // Show/hide exploration based on algorithm
+            explorationGroup.style.display = algorithm === 'DQN' ? 'block' : 'none';
+        }
+        
+        function loadPreset(preset) {
+            console.log('Loading preset:', preset);
+            
+            const algorithm = document.getElementById('algorithm');
+            const timesteps = document.getElementById('timesteps');
+            const continuous = document.getElementById('continuous-train');
+            const learningRate = document.getElementById('learning-rate');
+            const gamma = document.getElementById('gamma');
+            
+            if (!algorithm || !timesteps || !continuous) {
+                console.error('Form elements not found!');
+                alert('Error: Form elements not loaded. Please refresh the page.');
+                return;
+            }
+            
+            if (preset === 'quick') {
+                algorithm.value = 'PPO';
+                timesteps.value = '10000';
+                continuous.checked = true;
+                learningRate.value = '3e-4';
+                gamma.value = '0.99';
+                alert('✅ Quick Test Preset Loaded!\n\n• Algorithm: PPO\n• Timesteps: 10,000\n• Time: ~10 minutes\n• Good for testing setup');
+            } else if (preset === 'competition') {
+                algorithm.value = 'PPO';
+                timesteps.value = '500000';
+                continuous.checked = true;
+                learningRate.value = '3e-4';
+                gamma.value = '0.995';
+                alert('🏆 Competition Mode Loaded!\n\n• Algorithm: PPO (best)\n• Timesteps: 500,000\n• Continuous: Yes\n• Gamma: 0.995 (thinks ahead)\n• Time: ~2-3 hours\n• Optimized for winning!');
+            } else if (preset === 'advanced') {
+                algorithm.value = 'PPO';
+                timesteps.value = '1000000';
+                continuous.checked = true;
+                learningRate.value = '3e-4';
+                gamma.value = '0.999';
+                document.getElementById('hyperparams').style.display = 'block';
+                document.getElementById('hyperparam-toggle').textContent = 'Hide Advanced Settings';
+                alert('⚡ Advanced Training Loaded!\n\n• Algorithm: PPO\n• Timesteps: 1,000,000\n• Gamma: 0.999 (max planning)\n• Time: ~5-6 hours\n• Customize settings below!');
+            }
+            
+            console.log('Preset loaded successfully');
+        }
+        
+        // Update exploration visibility when algorithm changes
+        document.getElementById('algorithm').addEventListener('change', function() {
+            const explorationGroup = document.getElementById('exploration-group');
+            explorationGroup.style.display = this.value === 'DQN' ? 'block' : 'none';
+        });
+        
+        function startTraining() {
+            const algorithm = document.getElementById('algorithm').value;
+            const timesteps = parseInt(document.getElementById('timesteps').value);
+            const continuous = document.getElementById('continuous-train').checked;
+            const learningRate = parseFloat(document.getElementById('learning-rate').value);
+            const gamma = parseFloat(document.getElementById('gamma').value);
+            const exploration = parseFloat(document.getElementById('exploration').value);
+            const nEnvs = parseInt(document.getElementById('n-envs').value);
+            const renderAll = document.getElementById('render-all').checked;
+            
+            // Validate
+            if (algorithm === 'DQN' && continuous) {
+                alert('❌ DQN only supports discrete actions!\n\nUncheck "Continuous Actions" or choose PPO/A2C.');
+                return;
+            }
+            
+            // Build summary
+            const summary = `
+🚀 Start Training?
+
+Algorithm: ${algorithm}
+Timesteps: ${timesteps.toLocaleString()}
+Actions: ${continuous ? 'Continuous (smooth)' : 'Discrete'}
+Parallel Envs: ${nEnvs} (${nEnvs}x speedup)
+Learning Rate: ${learningRate}
+Gamma: ${gamma}
+${algorithm === 'DQN' ? 'Exploration: ' + exploration : ''}
+
+✅ Vectorized Training (${nEnvs} environments)
+${renderAll && nEnvs >= 4 ? `🎥 ${nEnvs === 8 ? '4x2' : '2x2'} Grid View - ${nEnvs} Cars!` : ''}
+✅ Auto-checkpoint every 50k timesteps
+✅ Live progress monitoring
+
+Estimated Time: ${estimateTime(timesteps / nEnvs)}
+            `.trim();
+            
+            if (!confirm(summary)) {
+                return;
+            }
+            
+            fetch(`${basePath}/train`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    algorithm: algorithm,
+                    timesteps: timesteps,
+                    continuous: continuous,
+                    learning_rate: learningRate,
+                    gamma: gamma,
+                    exploration_fraction: exploration,
+                    n_envs: nEnvs,
+                    render_all: renderAll
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Training started:', data);
+                const statusBadge = document.getElementById('status-badge');
+                statusBadge.className = 'status-badge training';
+                statusBadge.innerHTML = '<i class="fas fa-circle"></i><span>Training: ' + algorithm + '</span>';
+                
+                if (updateInterval) clearInterval(updateInterval);
+                updateInterval = setInterval(updateStats, 100);
+            })
+            .catch(error => {
+                console.error('Error starting training:', error);
+                alert('❌ Failed to start training. Check console for details.');
+            });
+        }
+        
+        function startParallelTraining() {
+            const configs = [
+                {
+                    algorithm: 'PPO',
+                    continuous: true,
+                    timesteps: 200000,
+                    learning_rate: 3e-4,
+                    gamma: 0.99,
+                    n_envs: 2,
+                    name: 'ppo_gamma99'
+                },
+                {
+                    algorithm: 'PPO',
+                    continuous: true,
+                    timesteps: 200000,
+                    learning_rate: 3e-4,
+                    gamma: 0.995,
+                    n_envs: 2,
+                    name: 'ppo_gamma995'
+                },
+                {
+                    algorithm: 'PPO',
+                    continuous: true,
+                    timesteps: 200000,
+                    learning_rate: 3e-4,
+                    gamma: 0.999,
+                    n_envs: 2,
+                    name: 'ppo_gamma999'
+                }
+            ];
+            
+            const summary = `
+🚀 Start 3 Parallel Training Jobs?
+
+Each training will run simultaneously:
+
+1️⃣ PPO gamma=0.99  (baseline)
+2️⃣ PPO gamma=0.995 (medium planning)
+3️⃣ PPO gamma=0.999 (long-term planning)
+
+• 200k timesteps each
+• 2 parallel environments per job
+• Auto-checkpoints every 50k
+• Find the best gamma in one go!
+
+Time: ~2 hours (all 3 finish together!)
+CPU: Uses cores 8-31 efficiently
+
+This will train 3 models at once to find the winner!
+            `.trim();
+            
+            if (!confirm(summary)) {
+                return;
+            }
+            
+            fetch(`${basePath}/train_parallel`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    configs: configs
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Parallel training started:', data);
+                const statusBadge = document.getElementById('status-badge');
+                statusBadge.className = 'status-badge training';
+                statusBadge.innerHTML = '<i class="fas fa-circle"></i><span>Training: ' + data.count + ' Parallel Jobs</span>';
+                
+                if (updateInterval) clearInterval(updateInterval);
+                updateInterval = setInterval(updateStats, 100);
+                
+                alert(`✅ Parallel Training Started!\n\n${data.count} models training simultaneously:\n${data.configs.join('\n')}`);
+            })
+            .catch(error => {
+                console.error('Error starting parallel training:', error);
+                alert('❌ Failed to start parallel training. Check console for details.');
+            });
+        }
+        
+        function estimateTime(timesteps) {
+            // Roughly 500 timesteps per minute on your CPU
+            const minutes = Math.round(timesteps / 500);
+            if (minutes < 60) return `~${minutes} min`;
+            const hours = Math.round(minutes / 60 * 10) / 10;
+            return `~${hours} hrs`;
+        }
+        
+        // Auto-update stats every 100ms
+        setInterval(updateStats, 100);
+        
+        // ==================== MULTI-SERVER FUNCTIONALITY ====================
+        
+        let remoteServers = [];
+        let currentServer = 'local';
+        
+        // Load remote server configuration
+        async function loadRemoteServers() {
+            try {
+                const response = await fetch(basePath + 'api/remote_servers');
+                const data = await response.json();
+                remoteServers = data.servers || [];
+                
+                // Build server tabs
+                const tabsContainer = document.getElementById('serverTabs');
+                tabsContainer.innerHTML = '';
+                
+                remoteServers.forEach(server => {
+                    if (!server.enabled) return;
+                    
+                    const tab = document.createElement('button');
+                    tab.className = 'server-tab';
+                    tab.dataset.server = server.id;
+                    if (server.id === 'local') tab.classList.add('active');
+                    
+                    tab.innerHTML = `
+                        <span class="status-dot"></span>
+                        ${server.name}
+                    `;
+                    
+                    tab.addEventListener('click', () => switchServer(server.id));
+                    tabsContainer.appendChild(tab);
+                    
+                    // Check server status
+                    checkServerStatus(server);
+                });
+                
+            } catch (error) {
+                console.error('Error loading remote servers:', error);
+            }
+        }
+        
+        // Check if remote server is online
+        async function checkServerStatus(server) {
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 3000);
+                
+                const response = await fetch(server.url + '/api/server_info', {
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+                
+                if (response.ok) {
+                    const tab = document.querySelector(`[data-server="${server.id}"]`);
+                    if (tab) tab.classList.add('online');
+                }
+            } catch (error) {
+                const tab = document.querySelector(`[data-server="${server.id}"]`);
+                if (tab) {
+                    tab.classList.remove('online');
+                    tab.classList.add('offline');
+                }
+            }
+        }
+        
+        // Switch between servers
+        function switchServer(serverId) {
+            currentServer = serverId;
+            
+            // Update tab active state
+            document.querySelectorAll('.server-tab').forEach(tab => {
+                tab.classList.remove('active');
+                if (tab.dataset.server === serverId) {
+                    tab.classList.add('active');
+                }
+            });
+            
+            // Update content active state  
+            document.querySelectorAll('.server-content').forEach(content => {
+                content.classList.remove('active');
+                if (content.dataset.server === serverId) {
+                    content.classList.add('active');
+                }
+            });
+            
+            // Update stats for selected server
+            updateStatsForServer(serverId);
+        }
+        
+        // Update stats for specific server
+        async function updateStatsForServer(serverId) {
+            const server = remoteServers.find(s => s.id === serverId);
+            if (!server) return;
+            
+            try {
+                const baseUrl = server.id === 'local' ? basePath : server.url + '/';
+                const response = await fetch(baseUrl + 'api/server_info');
+                
+                if (!response.ok) throw new Error('Server offline');
+                
+                const data = await response.json();
+                
+                // Update all stats with server's data
+                if (data.stats) {
+                    document.getElementById('episode').textContent = data.stats.episode || 0;
+                    document.getElementById('total-reward').textContent = (data.stats.total_reward || 0).toFixed(2);
+                    document.getElementById('steps').textContent = data.stats.step || 0;
+                    document.getElementById('fps').textContent = data.stats.fps || 0;
+                    document.getElementById('last-reward').textContent = (data.stats.reward || 0).toFixed(3);
+                    document.getElementById('avg-reward').textContent = (data.stats.avg_reward || 0).toFixed(2);
+                    document.getElementById('max-reward').textContent = (data.stats.max_reward || 0).toFixed(2);
+                    document.getElementById('algorithm').textContent = data.stats.algorithm || 'None';
+                    document.getElementById('parallel-count').textContent = data.stats.parallel_count || 0;
+                    document.getElementById('checkpoints').textContent = data.stats.checkpoints_saved || 0;
+                    
+                    // Update status badge
+                    const statusBadge = document.getElementById('status-badge');
+                    if (data.is_training) {
+                        statusBadge.className = 'status-badge training';
+                        statusBadge.querySelector('span').textContent = 'Training';
+                    } else if (data.is_running) {
+                        statusBadge.className = 'status-badge running';
+                        statusBadge.querySelector('span').textContent = 'Running';
+                    } else {
+                        statusBadge.className = 'status-badge stopped';
+                        statusBadge.querySelector('span').textContent = 'Stopped';
+                    }
+                }
+                
+                // Update video feed if not local
+                if (serverId !== 'local') {
+                    const videoFeed = document.getElementById('video-feed');
+                    if (videoFeed) {
+                        videoFeed.src = server.url + '/video_feed';
+                    }
+                }
+                
+            } catch (error) {
+                console.error(`Error fetching stats from ${serverId}:`, error);
+            }
+        }
+        
+        // Initialize multi-server on page load
+        loadRemoteServers();
+        
+        // Poll remote servers every 2 seconds
+        setInterval(() => {
+            if (currentServer !== 'local') {
+                updateStatsForServer(currentServer);
+            }
+        }, 2000);
+        
+    </script>
+</body>
+</html>

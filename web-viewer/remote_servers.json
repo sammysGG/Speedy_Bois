@@ -1,0 +1,27 @@
+{
+  "servers": [
+    {
+      "id": "local",
+      "name": "Server 1 (Local)",
+      "url": "http://localhost:5000",
+      "enabled": true,
+      "specs": "AMD Ryzen 9 9950X (32 threads)"
+    },
+    {
+      "id": "remote1",
+      "name": "Server 2 (Remote)",
+      "url": "http://192.168.1.100:5000",
+      "enabled": false,
+      "specs": "AMD Ryzen 9 7950X3D (32 threads)",
+      "notes": "Replace with actual IP/hostname"
+    },
+    {
+      "id": "remote2",
+      "name": "Server 3 (Remote)",
+      "url": "http://192.168.1.101:5000",
+      "enabled": false,
+      "specs": "AMD Ryzen 9 7950X3D (32 threads)",
+      "notes": "Replace with actual IP/hostname"
+    }
+  ]
+}

@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Car Racing Viewer - DCM Race</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0a0e27;
+            color: #e8eaed;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: #12172e;
+            padding: 8px 16px;
+            margin: -20px -20px 10px -20px;
+            border-bottom: 1px solid #1e2541;
+        }
+        
+        .header-content {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        h1 {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        h1 i {
+            color: #00d9ff;
+            font-size: 0.9em;
+        }
+        
+        .subtitle {
+            font-size: 0.7em;
+            color: #6c7a9b;
+            font-weight: 400;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 600px 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .video-section {
+            background: #12172e;
+            border: 1px solid #1e2541;
+            padding: 0;
+            overflow: hidden;
+        }
+        
+        .section-header {
+            padding: 8px 12px;
+            border-bottom: 1px solid #1e2541;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            font-size: 0.8em;
+        }
+        
+        .section-header i {
+            color: #00d9ff;
+            width: 16px;
+            font-size: 0.85em;
+        }
+        
+        .video-container {
+            position: relative;
+            background: #000;
+            max-height: 500px;
+            overflow: hidden;
+        }
+        
+        #video-stream {
+            width: 100%;
+            height: auto;
+            display: block;
+            max-height: 500px;
+            object-fit: contain;
+        }
+        
+        .stats-panel {
+            background: #12172e;
+            border: 1px solid #1e2541;
+            max-height: 550px;
+            overflow-y: auto;
+        }
+        
+        .stats-content {
+            padding: 10px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        
+        .stat-card {
+            background: #1a2038;
+            padding: 8px 10px;
+            border-left: 2px solid #00d9ff;
+            transition: transform 0.2s;
+        }
+        
+        .stat-card:hover {
+            transform: translateX(2px);
+        }
+        
+        .stat-header {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 4px;
+        }
+        
+        .stat-icon {
+            width: 22px;
+            height: 22px;
+            background: rgba(0, 217, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7em;
+            color: #00d9ff;
+        }
+        
+        .stat-label {
+            font-size: 0.65em;
+            color: #6c7a9b;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        
+        .stat-value {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: #ffffff;
+            font-family: 'Courier New', monospace;
+            line-height: 1.2;
+        }
+        
+        .stat-card.reward .stat-icon {
+            background: rgba(76, 175, 80, 0.1);
+            color: #4CAF50;
+        }
+        
+        .stat-card.reward {
+            border-left-color: #4CAF50;
+        }
+        
+        .stat-card.reward .stat-value {
+            color: #4CAF50;
+        }
+        
+        .stat-card.total .stat-icon {
+            background: rgba(255, 193, 7, 0.1);
+            color: #FFC107;
+        }
+        
+        .stat-card.total {
+            border-left-color: #FFC107;
+        }
+        
+        .stat-card.total .stat-value {
+            color: #FFC107;
+        }
+
+        .stat-card.info .stat-icon {
+            background: rgba(33, 150, 243, 0.1);
+            color: #2196F3;
+        }
+        
+        .stat-card.info {
+            border-left-color: #2196F3;
+        }
+        
+        .stat-card.info .stat-value {
+            color: #2196F3;
+        }
+
+        .stat-card.warning .stat-icon {
+            background: rgba(255, 152, 0, 0.1);
+            color: #FF9800;
+        }
+        
+        .stat-card.warning {
+            border-left-color: #FF9800;
+        }
+        
+        .stat-card.warning .stat-value {
+            color: #FF9800;
+        }
+        
+        .controls {
+            background: #12172e;
+            border: 1px solid #1e2541;
+        }
+        
+        .controls-content {
+            padding: 10px;
+        }
+        
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        
+        button {
+            padding: 8px 14px;
+            font-size: 0.8em;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+            background: #1a2038;
+            color: #e8eaed;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            border: 1px solid #2a3454;
+        }
+        
+        button:hover {
+            background: #232b47;
+            border-color: #3a4564;
+        }
+        
+        button:active {
+            transform: scale(0.98);
+        }
+        
+        .btn-primary {
+            background: #00d9ff;
+            color: #0a0e27;
+            border-color: #00d9ff;
+        }
+        
+        .btn-primary:hover {
+            background: #00c4e6;
+            border-color: #00c4e6;
+        }
+        
+        .btn-secondary {
+            background: #7c3aed;
+            color: #ffffff;
+            border-color: #7c3aed;
+        }
+        
+        .btn-secondary:hover {
+            background: #6d28d9;
+            border-color: #6d28d9;
+        }
+        
+        .btn-danger {
+            background: #ef4444;
+            color: #ffffff;
+            border-color: #ef4444;
+            grid-column: span 2;
+        }
+        
+        .btn-danger:hover {
+            background: #dc2626;
+            border-color: #dc2626;
+        }
+        
+        button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        
+        button:disabled:hover {
+            transform: none;
+            background: #1a2038;
+        }
+        
+        .status {
+            padding: 6px;
+            background: #1a2038;
+            margin-top: 8px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.75em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            border: 1px solid #2a3454;
+        }
+        
+        .status i {
+            font-size: 0.9em;
+        }
+        
+        .status.running {
+            background: rgba(76, 175, 80, 0.15);
+            border-color: #4CAF50;
+            color: #4CAF50;
+        }
+        
+        .status.stopped {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: #ef4444;
+            color: #ef4444;
+        }
+        
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-content {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .button-group {
+                grid-template-columns: 1fr;
+            }
+            
+            .btn-danger {
+                grid-column: span 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <div>
+                <h1><i class="fas fa-flag-checkered"></i> AI Car Racing Viewer</h1>
+                <p class="subtitle">DCM Reinforcement Learning Competition</p>
+            </div>
+        </div>
+    </header>
+    
+    <div class="container">
+        <div class="main-content">
+            <div class="video-section">
+                <div class="section-header">
+                    <i class="fas fa-tv"></i>
+                    <span>Live Track View</span>
+                </div>
+                <div class="video-container">
+                    <img id="video-stream" src="video_feed" alt="Racing Stream">
+                </div>
+            </div>
+            
+            <div class="stats-panel">
+                <div class="section-header">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Statistics</span>
+                </div>
+                <div class="stats-content">
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon">
+                                <i class="fas fa-hashtag"></i>
+                            </div>
+                            <div class="stat-label">Episode</div>
+                        </div>
+                        <div class="stat-value" id="episode">0</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon">
+                                <i class="fas fa-stopwatch"></i>
+                            </div>
+                            <div class="stat-label">Step</div>
+                        </div>
+                        <div class="stat-value" id="step">0</div>
+                    </div>
+                    
+                    <div class="stat-card total">
+                        <div class="stat-header">
+                            <div class="stat-icon">
+                                <i class="fas fa-trophy"></i>
+                            </div>
+                            <div class="stat-label">Total Reward</div>
+                        </div>
+                        <div class="stat-value" id="total-reward">0.00</div>
+                    </div>
+                    
+                    <div class="stat-card reward">
+                        <div class="stat-header">
+                            <div class="stat-icon">
+                                <i class="fas fa-star"></i>
+                            </div>
+                            <div class="stat-label">Last Reward</div>
+                        </div>
+                        <div class="stat-value" id="reward">0.00</div>
+                    </div>
+
+                    <div class="stat-card info">
+                        <div class="stat-header">
+                            <div class="stat-icon">
+                                <i class="fas fa-chart-bar"></i>
+                            </div>
+                            <div class="stat-label">Avg Reward</div>
+                        </div>
+                        <div class="stat-value" id="avg-reward">0.00</div>
+                    </div>
+
+                    <div class="stat-card warning">
+                        <div class="stat-header">
+                            <div class="stat-icon">
+                                <i class="fas fa-fire"></i>
+                            </div>
+                            <div class="stat-label">Max Reward</div>
+                        </div>
+                        <div class="stat-value" id="max-reward">0.00</div>
+                    </div>
+
+                    <div class="stat-card info">
+                        <div class="stat-header">
+                            <div class="stat-icon">
+                                <i class="fas fa-tachometer-alt"></i>
+                            </div>
+                            <div class="stat-label">FPS</div>
+                        </div>
+                        <div class="stat-value" id="fps">0</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="stat-label">Episode Time</div>
+                        </div>
+                        <div class="stat-value" id="episode-time">0s</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <div class="section-header">
+                <i class="fas fa-gamepad"></i>
+                <span>Controls</span>
+            </div>
+            <div class="controls-content">
+                <div class="button-group">
+                    <button class="btn-primary" onclick="startRacing(false)">
+                        <i class="fas fa-play"></i>
+                        Start Discrete
+                    </button>
+                    <button class="btn-secondary" onclick="startRacing(true)">
+                        <i class="fas fa-play"></i>
+                        Start Continuous
+                    </button>
+                    <button class="btn-danger" onclick="stopRacing()">
+                        <i class="fas fa-stop"></i>
+                        Stop Episode
+                    </button>
+                </div>
+                <div id="status" class="status stopped">
+                    <i class="fas fa-circle"></i>
+                    <span>Stopped</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls" style="margin-top: 15px;">
+            <div class="section-header">
+                <i class="fas fa-brain"></i>
+                <span>Training</span>
+            </div>
+            <div class="controls-content">
+                <div style="margin-bottom: 8px;">
+                    <label style="font-size: 0.75em; color: #6c7a9b; display: block; margin-bottom: 4px;">ALGORITHM</label>
+                    <select id="algorithm" style="width: 100%; padding: 6px; background: #1a2038; color: #e8eaed; border: 1px solid #2a3454; font-size: 0.85em;">
+                        <option value="PPO">PPO (Recommended)</option>
+                        <option value="DQN">DQN (Discrete Only)</option>
+                        <option value="A2C">A2C (Fast)</option>
+                    </select>
+                </div>
+                <div style="margin-bottom: 8px;">
+                    <label style="font-size: 0.75em; color: #6c7a9b; display: block; margin-bottom: 4px;">TIMESTEPS</label>
+                    <select id="timesteps" style="width: 100%; padding: 6px; background: #1a2038; color: #e8eaed; border: 1px solid #2a3454; font-size: 0.85em;">
+                        <option value="10000">10,000 (Quick Test)</option>
+                        <option value="50000" selected>50,000 (Fast)</option>
+                        <option value="100000">100,000 (Medium)</option>
+                        <option value="200000">200,000 (Long)</option>
+                        <option value="500000">500,000 (Full)</option>
+                    </select>
+                </div>
+                <div style="margin-bottom: 8px;">
+                    <label style="font-size: 0.75em; color: #6c7a9b; display: flex; align-items: center; gap: 6px;">
+                        <input type="checkbox" id="continuous-train" style="margin: 0;">
+                        <span>Continuous Actions</span>
+                    </label>
+                </div>
+                <button class="btn-primary" onclick="startTraining()" style="width: 100%; grid-column: span 2;">
+                    <i class="fas fa-rocket"></i>
+                    Start Training
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let updateInterval;
+        const basePath = window.location.pathname.replace(/\/$/, '');
+        let lastUpdate = Date.now();
+        let frameCount = 0;
+        
+        function updateStats() {
+            fetch(`${basePath}/stats`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('episode').textContent = data.episode;
+                    document.getElementById('step').textContent = data.step;
+                    document.getElementById('total-reward').textContent = data.total_reward.toFixed(2);
+                    document.getElementById('reward').textContent = data.reward.toFixed(2);
+                    
+                    // Calculate average reward
+                    const avgReward = data.step > 0 ? (data.total_reward / data.step).toFixed(2) : '0.00';
+                    document.getElementById('avg-reward').textContent = avgReward;
+                    
+                    // Max reward
+                    document.getElementById('max-reward').textContent = data.max_reward ? data.max_reward.toFixed(2) : '0.00';
+                    
+                    // FPS calculation
+                    frameCount++;
+                    const now = Date.now();
+                    const elapsed = (now - lastUpdate) / 1000;
+                    if (elapsed >= 1) {
+                        const fps = Math.round(frameCount / elapsed);
+                        document.getElementById('fps').textContent = fps;
+                        frameCount = 0;
+                        lastUpdate = now;
+                    }
+                    
+                    // Episode time
+                    document.getElementById('episode-time').textContent = data.episode_time ? data.episode_time + 's' : '0s';
+                    
+                    // Update status if training
+                    if (data.training_mode) {
+                        const statusEl = document.getElementById('status');
+                        statusEl.innerHTML = '<i class="fas fa-circle"></i><span>Training: ' + data.algorithm + '</span>';
+                        statusEl.className = 'status running';
+                    }
+                })
+                .catch(error => console.error('Error fetching stats:', error));
+        }
+        
+        function startRacing(continuous) {
+            const mode = continuous ? 1 : 0;
+            fetch(`${basePath}/start/${mode}`)
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Started:', data);
+                    const statusEl = document.getElementById('status');
+                    statusEl.innerHTML = '<i class="fas fa-circle"></i><span>Running</span>';
+                    statusEl.className = 'status running';
+                    
+                    if (updateInterval) clearInterval(updateInterval);
+                    updateInterval = setInterval(updateStats, 100);
+                })
+                .catch(error => console.error('Error starting:', error));
+        }
+        
+        function stopRacing() {
+            fetch(`${basePath}/stop`)
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Stopped:', data);
+                    const statusEl = document.getElementById('status');
+                    statusEl.innerHTML = '<i class="fas fa-circle"></i><span>Stopped</span>';
+                    statusEl.className = 'status stopped';
+                    
+                    if (updateInterval) {
+                        clearInterval(updateInterval);
+                        updateInterval = null;
+                    }
+                })
+                .catch(error => console.error('Error stopping:', error));
+        }
+        
+        function startTraining() {
+            const algorithm = document.getElementById('algorithm').value;
+            const timesteps = parseInt(document.getElementById('timesteps').value);
+            const continuous = document.getElementById('continuous-train').checked;
+            
+            // Validate
+            if (algorithm === 'DQN' && continuous) {
+                alert('DQN only supports discrete actions!');
+                return;
+            }
+            
+            // Confirm
+            if (!confirm(`Start training ${algorithm} for ${timesteps.toLocaleString()} timesteps?\n\nThis will take some time and you can watch it live.`)) {
+                return;
+            }
+            
+            fetch(`${basePath}/train`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    algorithm: algorithm,
+                    timesteps: timesteps,
+                    continuous: continuous
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Training started:', data);
+                const statusEl = document.getElementById('status');
+                statusEl.innerHTML = '<i class="fas fa-circle"></i><span>Training: ' + algorithm + '</span>';
+                statusEl.className = 'status running';
+                
+                if (updateInterval) clearInterval(updateInterval);
+                updateInterval = setInterval(updateStats, 100);
+                
+                alert(`Training started!\nAlgorithm: ${algorithm}\nTimesteps: ${timesteps.toLocaleString()}\n\nWatch the progress in the viewer.`);
+            })
+            .catch(error => {
+                console.error('Error starting training:', error);
+                alert('Failed to start training. Check console for details.');
+            });
+        }
+        
+        // Auto-update stats every 100ms when page loads
+        setInterval(updateStats, 100);
+    </script>
+</body>
+</html>

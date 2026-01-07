@@ -37,4 +37,8 @@ COPY --from=builder /install /usr/local
 
 EXPOSE 8888
 
-CMD ["jupyter", "notebook", "--ip=0.0.0.0", "--port=8888", "--no-browser", "--allow-root", "--NotebookApp.token=", "--NotebookApp.password="]
+# Set Jupyter password
+RUN mkdir -p /root/.jupyter && \
+    python3 -c "from jupyter_server.auth import passwd; import json; config = {'ServerApp': {'password': passwd('!Number30234872')}}; f = open('/root/.jupyter/jupyter_server_config.json', 'w'); json.dump(config, f); f.close()"
+
+CMD ["jupyter", "notebook", "--ip=0.0.0.0", "--port=8888", "--no-browser", "--allow-root"]
