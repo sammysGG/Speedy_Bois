@@ -10,7 +10,7 @@
     {
       "id": "remote1",
       "name": "Server 2 (7950X3D)",
-      "url": "http://64.87.44.189:5000",
+      "url": "https://dcmrace2.goathost.gg",
       "enabled": true,
       "specs": "AMD Ryzen 9 7950X3D (24 threads, cores 8-31)"
     },
