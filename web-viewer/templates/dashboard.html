@@ -979,7 +979,11 @@
             const password = promptPassword();
             if (!password) return;
             
-            fetch(`${basePath}/stop`, {
+            // Get the correct server URL
+            const server = remoteServers.find(s => s.id === currentServer);
+            const serverUrl = server ? (server.id === 'local' ? basePath : server.url) : basePath;
+            
+            fetch(`${serverUrl}/stop`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1098,8 +1102,9 @@
             }
             
             // Build summary
+            const currentServerName = remoteServers.find(s => s.id === currentServer)?.name || 'Unknown';
             const summary = `
-🚀 Start Training?
+🚀 Start Training on ${currentServerName}?
 
 Algorithm: ${algorithm}
 Timesteps: ${timesteps.toLocaleString()}
@@ -1121,7 +1126,11 @@ Estimated Time: ${estimateTime(timesteps / nEnvs)}
                 return;
             }
             
-            fetch(`${basePath}/train`, {
+            // Get the correct server URL
+            const server = remoteServers.find(s => s.id === currentServer);
+            const serverUrl = server ? (server.id === 'local' ? basePath : server.url) : basePath;
+            
+            fetch(`${serverUrl}/train`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
