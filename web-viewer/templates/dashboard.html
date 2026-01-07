@@ -1335,7 +1335,9 @@ This will train 3 models at once to find the winner!
         // Switch between servers
         function switchServer(serverId) {
             currentServer = serverId;
-            console.log('Switching to server:', serverId);
+            console.log('===========================================');
+            console.log('🔄 SWITCHING TO SERVER:', serverId);
+            console.log('===========================================');
             
             // Update tab active state
             document.querySelectorAll('.server-tab').forEach(tab => {
@@ -1350,8 +1352,10 @@ This will train 3 models at once to find the winner!
             const indicator = document.getElementById('current-server-indicator');
             if (indicator && server) {
                 indicator.textContent = server.name;
+                console.log('📊 Server indicator updated to:', server.name);
             }
             
+            console.log('📈 Fetching stats from server:', serverId);
             // Immediately fetch and display stats for this server
             updateStatsForServer(serverId);
         }
@@ -1404,12 +1408,19 @@ This will train 3 models at once to find the winner!
                 // Update video feed based on server
                 const videoFeed = document.getElementById('video-stream');
                 if (videoFeed) {
+                    // Add timestamp to prevent caching
+                    const timestamp = new Date().getTime();
                     if (serverId === 'local') {
-                        videoFeed.src = basePath + '/video_feed';
+                        videoFeed.src = basePath + '/video_feed?t=' + timestamp;
                     } else {
-                        videoFeed.src = server.url + '/video_feed';
+                        videoFeed.src = server.url + '/video_feed?t=' + timestamp;
                     }
                     console.log('Video feed updated to:', videoFeed.src);
+                    
+                    // Force reload
+                    videoFeed.onerror = () => {
+                        console.error('Video feed failed to load from:', videoFeed.src);
+                    };
                 }
                 
             } catch (error) {
