@@ -6,6 +6,7 @@ Streams the racing environment to a web interface with parallel training support
 import gymnasium
 import numpy as np
 from flask import Flask, render_template, Response, jsonify, request
+from flask_cors import CORS
 import cv2
 import threading
 import time
@@ -20,6 +21,7 @@ import json
 import hashlib
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
 
 # Password protection for control actions
 CONTROL_PASSWORD = os.environ.get('RACING_PASSWORD', 'speedybois2024')
